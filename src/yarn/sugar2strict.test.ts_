@@ -1,0 +1,394 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import { StrictYarn } from "./strict_yarn";
+import { SugarYarn } from "./sugar_yarn";
+import { sugar2strict, _desugar_else, desugar, _desugar_say, _desugar_say_within_node, _desugar_say_object_with_array_of_strings } from "./sugar2strict";
+import { jlog, p, print } from "../Utils/utils.ts";
+import { expect } from '../../deps.ts'
+const test = Deno.test
+
+
+//var R = require('ramda');
+import { R } from '../../deps.ts'
+
+let log = console.log
+// let jlog = (pre: string, x: any) => console.log(pre, ':', JSON.stringify(x, null, 2))
+
+type AnyYarn = SugarYarn | StrictYarn;
+type AnyYarnArray = (AnyYarn | AnyYarn[])[];
+
+test("Desugar string -> say", () => {
+    let res = desugar("hello")
+    expect(res).toEqual([
+        { say: 'hello' },
+    ])
+})
+
+test("Desugar strings -> say", () => {
+    let res = desugar(["hello", "world"])
+    expect(res).toEqual([
+        { say: 'hello' },
+        { say: 'world' },
+    ])
+})
+
+test("if-else-then-singular", () => {
+    let sugarYarn: SugarYarn = {
+        if: "true",
+        say: "This should show",
+        else: "This should not show",
+        then: "This should also show"
+    }
+
+
+    let strictYarn: StrictYarn = desugar(sugarYarn)
+
+    // jlog("strictYarn", strictYarn)
+
+    expect(strictYarn).toEqual([
+        { if: "true", say: "This should show", then: { say: "This should also show" } },
+        { if: "not:true", say: "This should not show", then: { say: "This should also show" } }
+    ])
+})
+
+test("if-else-then--then-with-array", () => {
+    let sugarYarn: SugarYarn = {
+        if: "true",
+        say: "This should show",
+        else: "This should not show",
+        then: ["This should also show"],
+    }
+
+    let strictYarn: StrictYarn = desugar(sugarYarn)
+    expect(strictYarn).toEqual([
+        { if: "true", say: "This should show", then: [{ say: "This should also show" }] },
+        { if: "not:true", say: "This should not show", then: [{ say: "This should also show" }] }
+    ])
+})
+
+
+
+
+
+
+
+
+
+
+
+test("_desugar_say_within_node", () => {
+    let res = _desugar_say_within_node({
+        options: ["hi", "bye"],
+        else: "hello",
+        then: "bye",
+    })
+    expect(res).toEqual({
+        options: [["hi", "hi"], ["bye", "bye"]],
+        else: { say: "hello" },
+        then: { say: "bye" },
+    })
+
+    res = _desugar_say_within_node([])
+    expect(res).toEqual([])
+})
+
+test("_desugar_say_within_node 2", () => {
+    let res = _desugar_say_within_node({
+        options: ["hi", "bye"],
+        else: ["hello", "hello2"],
+        then: ["bye", "bye2"],
+    })
+    expect(res).toEqual({
+        options: [["hi", "hi"], ["bye", "bye"]],
+        else: [{ say: "hello" }, { say: "hello2" }],
+        then: [{ say: "bye" }, { say: "bye2" }],
+    })
+
+    res = _desugar_say_within_node([])
+    expect(res).toEqual([])
+})
+
+test("multi say/string array", () => {
+    let res = _desugar_say(["hello", "world"])
+    expect(res).toEqual([{ say: "hello" }, { say: "world" }])
+    res = desugar(["hello", "world"])
+    expect(res).toEqual([{ say: "hello" }, { say: "world" }])
+})
+
+test("_desugar_say_object_with_array_of_strings", () => {
+    let res = _desugar_say_object_with_array_of_strings({ say: ["a", "b", "c"] })
+    expect(res).toEqual([{ say: "a" }, { say: "b" }, { say: "c" }])
+})
+
+test("multi say/{say:[a,b,c]}", () => {
+    expect(_desugar_say({ say: ["hello", "there"] })).toEqual(
+        [
+            { say: "hello" },
+            { say: "there" }
+        ])
+
+
+    expect(desugar([{ say: ["hello", "there"] }])).toEqual(
+        [
+            { say: "hello" },
+            { say: "there" }
+        ])
+})
+test("_desugar_say", () => {
+    let res = _desugar_say(["hello"])
+    expect(res).toEqual([{ say: "hello" }])
+})
+
+
+test("single string expansion", () => {
+    let steps: AnyYarn[] = [
+        "hello",
+        { say: "hello" }, // macro-expand
+        { name: "hello", say: "hello" }, // fill in name
+    ]
+
+    let yarn: SugarYarn = "hello"
+    // let lowered = lower(yarn, { "hello": "Hello!" })
+    // expect(lowered.name).toEqual("hello")
+    // @ts-ignore
+    // expect(lowered.say).toEqual("Hello!")
+})
+
+test("desugar/root", () => {
+    expect(desugar(["hello"])).toEqual([{ say: "hello" }])
+    expect(desugar([{ say: "hello" }])).toEqual([{ say: "hello" }])
+    // expect(desugar([{}, {}])).toEqual([{}, {}])
+
+    // console.log(desugar(["hello", "world"]))
+    expect(desugar(["hello", "there"])).toEqual([{ say: "hello" }, { say: "there" }])
+})
+
+test("desugar/say_w_array_of_strings", () => {
+    expect(desugar([{ say: ["hello", "there"] }])).toEqual(
+        [
+            { say: "hello" },
+            { say: "there" } // TODO: second hello should be named hello_2
+        ])
+})
+
+test("desugar/options", () => {
+    // @ts-ignore
+    expect(desugar({ options: ["hi", "bye"] })).toStrictEqual([{ options: [["hi", "hi"], ["bye", "bye"]] }])
+    // @ts-ignore
+    expect(desugar({ options: [["hi", "hi"], ["bye", "bye"]] })).toStrictEqual([{ options: [["hi", "hi"], ["bye", "bye"]] }])
+})
+
+test("desugar/options with mixed actions", () => {
+    // @ts-ignore
+    expect(desugar({
+        options: [
+            "option1",
+            ["Option 2", "option2", { say: "O2" }],
+            ["option3", { call: "Opt3" }],
+            ["option4"]
+        ]
+    })).toStrictEqual([{
+        options:
+            [
+                ["option1", "option1"],
+                ["Option 2", "option2", { say: "O2" }],
+                ["option3", "option3", { call: "Opt3" }],
+                ["option4", "option4"]
+            ]
+    }])
+})
+
+test("desugar/actions", () => {
+    // @ts-ignore
+    expect(desugar({ then: ["hi", "bye"] })).toStrictEqual(
+        [{ then: [{ say: "hi" }, { say: "bye" }] }])
+    // @ts-ignore
+    expect(desugar({ options: [["hi", "hi"], ["bye", "bye"]] })).toStrictEqual([{ options: [["hi", "hi"], ["bye", "bye"]] }])
+})
+
+test("_desugar_else/else helper", () => {
+    let o = { if: "coming", say: "hi", else: 'bye' }
+    let res = _desugar_else(o)
+    expect(res).toStrictEqual(
+        [
+            { if: "coming", say: "hi" },
+            { if: "not:coming", say: "bye" } // the "not" is added later
+        ]
+    )
+})
+
+// not sure if this matters
+test("desugar/else helper/multi-string", () => {
+    let o = { if: "coming", say: ["hi", "there"], else: ["bye", "now"] }
+    let res = desugar(o)
+    expect(res).toStrictEqual(
+        [
+            { if: "coming", say: "hi" },
+            { if: "coming", say: "there" },
+            // { if: "not:coming", say: "bye" },
+            // { if: "not:coming", say: "now" },
+            { if: "not:coming", do: [{ say: "bye" }, { say: "now" }] },
+        ]
+    )
+})
+
+test("desugar/else", () => {
+    let o: SugarYarn = { if: "coming", say: "hi", else: 'bye' }
+    let res = desugar(o)
+    expect(res).toStrictEqual(
+        [
+            { if: "coming", say: "hi" },
+            { if: "not:coming", say: 'bye' },
+        ]
+    )
+})
+test("desugar/else w sugar", () => {
+    // @ts-ignore
+    let o = {
+        if: "coming",
+        say: ["hi", "there"],
+        else: ["bye", "now"],
+        then: ["over", "and", "out"]
+    }
+    // @ts-ignore
+    let res = desugar(o)
+
+    // @ts-ignore
+    expect(res).toStrictEqual(
+        [
+            {
+                if: "coming",
+                say: "hi",
+                // else: [{ say: "bye" }, { say: "now" }],
+            },
+            {
+                if: "coming",
+                say: "there",
+                // else: [{ say: "bye" }, { say: "now" }],
+                then: [{ say: "over" }, { say: "and" }, { say: "out" }]
+            },
+            // {
+            //     if: "not:coming",
+            //     say: "bye",
+            // },
+            {
+                if: "not:coming",
+                do: [{ say: "bye" }, { say: "now" }],
+                then: [{ say: "over" }, { say: "and" }, { say: "out" }]
+            }
+        ]
+    )
+})
+
+
+test("desugar full", () => {
+    expect(desugar(["hello"])).toEqual([{ say: "hello" }])
+    expect(desugar(
+        [{
+            say: "hello",
+            if: "should_say_hello",
+            else: "bye",
+            then: ["comms", "finished"]
+        }])).toStrictEqual(
+            [
+                {
+                    say: "hello",
+                    if: "should_say_hello",
+                    then: [{ say: "comms" }, { say: "finished" }]
+                },
+                {
+                    say: "bye",
+                    if: "not:should_say_hello",
+                    then: [{ say: "comms" }, { say: "finished" }]
+                },
+            ]
+        )
+})
+
+
+test("multi string expansion", () => {
+    expect(desugar(["hello", "intro"])).toEqual([{ say: "hello" }, { say: "intro" }])
+})
+
+
+test("multi w conditional", () => {
+    let lookups = {
+        "hello": "Hello",
+        "intro": "Hi there!",
+        "good": "Great!",
+        "bad": "Not great!",
+        "condition": "should_greet()",
+    }
+
+    let _: AnyYarnArray = [
+        { if: "condition", say: ["hello", "intro"] },
+        // expand condition
+        { if: "should_greet()", say: ["hello", "intro"] },
+
+        // detail
+        { name: "hello", if: "should_greet()", say: ["hello", "intro"], else: "goodbye" },
+        { name: "hello", if: "should_greet()", say: ["Hello", "I'm Anna"], else: "See you soon!" },
+
+        // expand - arrays
+        { name: "hello", if: "should_greet()", say: "Hello", else: "See you soon!" },
+        { name: "hello", if: "should_greet()", say: "I'm Anna", else: "See you soon!" },
+
+        // expand - else
+        { name: "hello", if: "not should_greet()", say: "See you soon!" },
+
+        // expand all 'if; conditions and then expand the 'else' condition/s
+        { name: "hello", if: "not should_greet()", say: "See you soon!" }, // can "not <condition>" work catagorically?
+    ]
+})
+
+
+// See also: logic test "then & else w sugar"
+test("then & else w sugar", () => {
+
+    let sugar: SugarYarn = {
+        if: "coming",
+        say: ["hi", "there"],
+        else: ["bye", "now"],
+        then: ["over", "and", "out"]
+    }
+
+    let strict = sugar2strict(sugar)
+    // let res = desugar(o)
+    // jlog("", strict)
+
+    expect(strict).toStrictEqual([
+        {
+            if: "coming",
+            say: "hi",
+        },
+        {
+            if: "coming",
+            say: "there",
+            then: [{ say: "over" }, { say: "and" }, { say: "out" }]
+        },
+        // {
+        //     if: "not:coming",
+        //     say: "bye",
+        // },
+        {
+            if: "not:coming",
+            do: [{ say: "bye" }, { say: "now" }],
+            then: [{ say: "over" }, { say: "and" }, { say: "out" }]
+        },
+    ])
+    // expect(strict).toStrictEqual([
+    //     {
+    //         if: "coming",
+    //         // say: [{ say: "hi" }, { say: "there" }],
+    //         say: ["hi", "there"],
+    //         then: [{ say: "over" }, { say: "and" }, { say: "out" }]
+    //     },
+    //     {
+    //         if: "not:coming",
+    //         say: [{ say: "bye" }, { say: "now" }],
+    //         then: [{ say: "over" }, { say: "and" }, { say: "out" }]
+    //     },
+    // ])
+})
+
+

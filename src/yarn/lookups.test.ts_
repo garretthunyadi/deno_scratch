@@ -1,0 +1,338 @@
+import { findLookupKeys, processLookups } from "./lookups.ts";
+import { expect } from '../../deps.ts'
+const test = Deno.test
+
+// describe("lookup locations", () => {
+test("say", () => {
+    expect(processLookups
+        ({ name: "x", say: "hello" }, {})).toStrictEqual
+        ({ name: "x", say: "hello", })
+
+    expect(processLookups
+        ({ name: "x", say: "hello" }, { "hello": "Hello!", })).toStrictEqual
+        ({ name: "x", say: "Hello!" })
+
+    expect(processLookups
+        ({ name: "x", say: "hello" }, { "hello": ["Hello!", "I'm Anna"], })).toStrictEqual
+        ({ name: "x", say: ["Hello!", "I'm Anna"] })  // TODO: will need to post-process this
+})
+
+test("ask", () => {
+    expect(processLookups
+        ({ name: "x", ask: "hello", type: 'string', into: "_ans" }, {})).toStrictEqual
+        ({ name: "x", ask: "hello", type: 'string', into: "_ans" })
+
+    expect(processLookups
+        ({ name: "x", ask: "hello", type: 'string', into: "_ans" }, { "hello": "Hello!", })).toStrictEqual
+        ({ name: "x", ask: "Hello!", type: 'string', into: "_ans" })
+
+    expect(processLookups
+        ({ name: "x", ask: "hello", type: 'string', into: "_ans" }, { "hello": ["Hello!", "I'm Anna"], into: "_ans" })).toStrictEqual
+        ({ name: "x", ask: ["Hello!", "I'm Anna"], into: "_ans", type: 'string' })  // TODO: will need to post-process this
+})
+
+test("ack", () => {
+    expect(processLookups
+        ({ name: "x", say: "hello", ack: "hi" }, {})).toStrictEqual
+        ({ name: "x", say: "hello", ack: "hi" })
+
+    expect(processLookups
+        ({ name: "x", say: "hello", ack: "hi" }, { "hi": "Hi!", })).toStrictEqual
+        ({ name: "x", say: "hello", ack: "Hi!" })
+})
+
+test("into", () => {
+    expect(processLookups([
+        { name: "question", ask: "question", type: 'string', into: "into1" }
+    ], { into1: "into2" }
+    )).toStrictEqual([
+        { name: "question", ask: "question", type: 'string', into: "into2" },
+    ])
+})
+
+test("into_lgv", () => {
+    expect(processLookups([
+        { name: "question", ask: "question", type: 'string', into_lgv: "into1" }
+    ], { into1: "into2" }
+    )).toStrictEqual([
+        { name: "question", ask: "question", type: 'string', into_lgv: "into2" },
+    ])
+})
+
+test("collect_lgv", () => {
+    expect(processLookups([
+        { name: "question", collect_lgv: "into1" }
+    ], { into1: "into2" }
+    )).toStrictEqual([
+        { name: "question", collect_lgv: "into2" },
+    ])
+})
+
+// })
+
+
+test("lookup with embedded lookup", () => {
+    expect(processLookups
+        ({ name: "x", say: "hello" }, { "hello": "Hello {username}!", })).toStrictEqual
+        ({ name: "x", say: "Hello {username}!" })
+
+    expect(processLookups
+        ({ name: "x", say: "hello" }, { "hello": "Hello {username}!", 'username': "{get(get_user_info(), 'user', 'username')}" })).toStrictEqual
+        ({ name: "x", say: "Hello {get(get_user_info(), 'user', 'username')}!" })
+})
+
+test("lookup 'else' version in base yarn", () => {
+    expect(processLookups(
+        { if: "not:first_day", say: "Welcome back, {username}!", name: "welcome_back_text" },
+        { first_day: "sleep_interview_date == date(1,1,1)", 'username': "{get(get_user_info(), 'user', 'username')}" }
+    )).toStrictEqual(
+        { if: "not (sleep_interview_date == date(1,1,1))", say: "Welcome back, {get(get_user_info(), 'user', 'username')}!", name: "welcome_back_text" })
+})
+
+test("lookup/multiline replacement", () => {
+    expect(processLookups
+        ({ name: "x", say: "hello" }, { hello: ["line1", "line2"] })).toStrictEqual
+        ({ name: "x", say: ["line1", "line2"], })
+})
+
+test("lookup/multiline w embedded replacements", () => {
+    expect(processLookups
+        ({ name: "x", say: "hello" },
+            {
+                hello: ["{line1}", "line2: {line2 replacement}"],
+                "line1": "line1 replacement",
+                "line2 replacement": "line2 replacement value"
+            })).toStrictEqual
+        ({ name: "x", say: ["line1 replacement", "line2: line2 replacement value"], })
+})
+
+test("lookup/multiline w embedded replacements with third-line replacements", () => {
+    expect(processLookups
+        ({ name: "x", say: "hello" },
+            {
+                hello: ["{line1}", "line2: {line2 replacement}"],
+                "line1": "line1 replacement",
+                "line2 replacement": "line2 replacement value with {third line replacement}",
+                "third line replacement": "third line replacement value"
+            })).toStrictEqual
+        ({ name: "x", say: ["line1 replacement", "line2: line2 replacement value with third line replacement value"], })
+})
+
+test("recursive lookups", () => {
+    expect(processLookups([
+        { name: "hello", say: "hello" },
+    ], {
+        hello: "hello2 {hello3}",
+        hello3: "{hello4}",
+        hello4: "hello5 {no-lookup}",
+
+    })).toStrictEqual([
+        { name: "hello", say: "hello2 hello5 {no-lookup}" },
+    ])
+})
+
+
+test("lookup empty strings", () => {
+    expect(processLookups([
+        { name: "empty", say: "replace_with_empty_string" },
+    ], {
+        replace_with_empty_string: ""
+    })).toStrictEqual([
+        { name: "empty", say: "" },
+    ])
+})
+
+describe("action lookups", () => {
+    test("action/say", () => {
+        expect(processLookups([
+            {
+                name: "question", ask: "question", type: 'string', into: "foo",
+                options: [
+                    ["A", "A", { say: "aaa" }],
+                    ["B", "B", [{ say: "bbb" }]],
+                    ["C", "C", [{ goto: "xxx" }, { say: "ccc" }]],
+
+                ]
+            }
+        ], {
+            aaa: "AAA",
+            bbb: "BBB",
+            ccc: "CCC",
+        }
+        )).toStrictEqual([
+            {
+                name: "question", ask: "question", type: 'string', into: "foo",
+                options: [
+                    ["A", "A", { say: "AAA" }],
+                    ["B", "B", [{ say: "BBB" }]],
+                    ["C", "C", [{ goto: "xxx" }, { say: "CCC" }]],
+                ]
+            },
+        ])
+    })
+
+    // I don't think that we ever would need to lookup a goto, since it's internal to the dialog.  But maybies...
+    // test("action/goto", () => {
+    //     expect(processLookups([
+    //         {
+    //             name: "question", ask: "question", type: 'string', into: "foo",
+    //             options: [
+    //                 ["A", "A", { goto: "aaa" }],
+    //                 ["B", "B", [{ goto: "bbb" }]],
+    //                 ["C", "C", [{ say: "xxx" }, { goto: "ccc" }]],
+
+    //             ]
+    //         }
+    //     ], {
+    //         aaa: "AAA",
+    //         bbb: "BBB",
+    //         ccc: "CCC",
+    //     }
+    //     )).toStrictEqual([
+    //         {
+    //             name: "question", ask: "question", type: 'string', into: "foo",
+    //             options: [
+    //                 ["A", "A", { goto: "AAA" }],
+    //                 ["B", "B", [{ goto: "BBB" }]],
+    //                 ["C", "C", [{ say: "xxx" }, { goto: "CCC" }]],
+    //             ]
+    //         },
+    //     ])
+    // })
+
+    test("action/exit_to", () => {
+        expect(processLookups([
+            {
+                name: "question", ask: "question", type: 'string', into: "foo",
+                options: [
+                    ["A", "A", { exit_to: "aaa" }],
+                    ["B", "B", [{ exit_to: "bbb" }]],
+                    ["C", "C", [{ say: "xxx" }, { exit_to: "ccc" }]],
+
+                ]
+            }
+        ], {
+            aaa: "AAA",
+            bbb: "BBB",
+            ccc: "CCC",
+        }
+        )).toStrictEqual([
+            {
+                name: "question", ask: "question", type: 'string', into: "foo",
+                options: [
+                    ["A", "A", { exit_to: "AAA" }],
+                    ["B", "B", [{ exit_to: "BBB" }]],
+                    ["C", "C", [{ say: "xxx" }, { exit_to: "CCC" }]],
+                ]
+            },
+        ])
+    })
+})
+
+describe("findLookupKeys", () => {
+    test("say", () => {
+        expect(findLookupKeys([
+            { name: "hello", say: "hello" },
+        ], {})).toStrictEqual(["hello"])
+
+        expect(findLookupKeys([
+            { name: "hello", say: "hello" },
+            { name: "hello2", say: "there" },
+        ], {})).toStrictEqual(["hello", "there"])
+    })
+
+    test("ask", () => {
+        expect(findLookupKeys([
+            { name: "hello", ask: "hello" },
+            { name: "hello2", ask: "there" },
+        ], {})).toStrictEqual(["hello", "there"])
+    })
+
+    test("if", () => {
+        let res = findLookupKeys([
+            { name: "hello", if: "c1", ask: "hello" },
+            { name: "hello2", ask: "there" },
+        ], {})
+        expect(res).toContain("c1")
+        expect(res).toContain("hello")
+        expect(res).toContain("there")
+    })
+
+    test("options", () => {
+        expect(findLookupKeys([
+            {
+                name: "hello", ask: "hello", options: [
+                    ["opt1", "opti1", { goto: "somewhere" }]
+                ]
+            },
+            { name: "hello2", ask: "there" },
+        ], {})).toStrictEqual(["hello", "there", "opt1"])
+
+        expect(findLookupKeys([
+            {
+                name: "hello", ask: "hello", options: [
+                    ["option1", "option1", { goto: "somewhere" }],
+                    ["option2", "option2"],
+                    ["option3", "option3", { goto: "somewhere_else" }],
+                ]
+            },
+        ], {})).toStrictEqual(["hello", "option1", "option2", "option3"])
+    })
+
+
+    test("action/say", () => {
+        let res = findLookupKeys([
+            { name: "hello", ask: "hi", then: [{ say: "then-say" }] },
+        ], {})
+        expect(res).toContain("then-say")
+        expect(res).toContain("hi")
+    })
+
+    test("action/goto", () => {
+        let res = findLookupKeys([
+            { name: "hello", ask: "hi", then: [{ say: "then-say" }, { goto: "then-goto" }] },
+        ], {})
+        expect(res).toContain("then-goto")
+        expect(res).toContain("then-say")
+        expect(res).toContain("hi")
+    })
+
+
+    test.todo("replacement with array with embedded keys")
+
+    test("embedded keys", () => {
+        let res = findLookupKeys([
+            { name: "hello", if: "c1", ask: "hello {username}" },
+            { name: "hello2", ask: "there" },
+        ], {})
+        expect(res).toContain("username")
+        expect(res).toContain("there")
+    })
+
+
+    test("embedded keys in lookups", () => {
+        let res = findLookupKeys([
+            { name: "hello", if: "c1", ask: "hello {username}" },
+            { name: "hello2", ask: "there" },
+        ], {
+            username: "{get-user-info.name}",
+        })
+        expect(res).toContain("get-user-info.name")
+        expect(res).toContain("c1")
+        expect(res).toContain("username")
+        expect(res).toContain("there")
+
+        res = findLookupKeys([
+            { name: "hello", if: "c1", ask: "hello {username}" },
+            { name: "hello2", ask: "there" },
+        ], {
+            username: "{user} {name}",
+        })
+        expect(res).toContain("user")
+        expect(res).toContain("name")
+        expect(res).toContain("c1")
+        expect(res).toContain("username")
+        expect(res).toContain("there")
+    })
+
+})

@@ -1,0 +1,121 @@
+import { Lgv } from "../hpml/hpml.ts"
+import { toDialog } from "./yarn_dialog"
+import { expect } from '../../deps.ts'
+const test = Deno.test
+
+test("toDialog/basic", () => {
+    let yarn = [
+        "hello_world"
+    ]
+    let dialog = toDialog("test", yarn, {})
+    expect(dialog.name).toBe("test")
+    expect(dialog.sections[0].nodes[0].name).toBe("hello_world")
+    // @ts-ignore
+    expect(dialog.sections[0].nodes[0].ask.prompts[0]).toBe("hello_world")
+})
+
+test("toDialog/lgv", () => {
+    let yarn = [
+        "hello_world"
+    ]
+    let additional_lgvs: Lgv[] = [
+        {
+            name: "str_lgv1",
+            type: "str",
+        },
+        {
+            name: "str_lgv2",
+            type: "str",
+            default: "'something'",
+        },
+
+        {
+            name: "bool_lgv1",
+            type: "bool",
+        },
+        {
+            name: "bool_lgv2",
+            type: "bool",
+            default: "True",
+        },
+
+        {
+            name: "int_lgv1",
+            type: "int",
+        },
+        {
+            name: "int_lgv2",
+            type: "int",
+            default: "-100",
+        },
+
+        {
+            name: "float_lgv1",
+            type: "float",
+        },
+        {
+            name: "float_lgv2",
+            type: "float",
+            default: "1.0",
+        },
+
+        {
+            name: "date_lgv1",
+            type: "date",
+        },
+        {
+            name: "date_lgv2",
+            type: "date",
+            default: "'date(10,10,10)'",
+        },
+
+        {
+            name: "list_lgv1",
+            type: "list",
+        },
+        {
+            name: "list_lgv2",
+            type: "list",
+            default: "['a','b','c']",
+        }
+
+    ]
+
+    let dialog = toDialog("test", yarn, {}, [], additional_lgvs)
+    expect(dialog.name).toBe("test")
+    expect(dialog.sections[0].nodes[0].name).toBe("hello_world")
+    // @ts-ignore
+    expect(dialog.sections[0].nodes[0].ask.prompts[0]).toBe("hello_world")
+
+
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[0]).toStrictEqual({ name: "str_lgv1", type: "str", default: "''" })
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[1]).toStrictEqual({ name: "str_lgv2", type: "str", default: "'something'" })
+
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[2]).toStrictEqual({ name: "bool_lgv1", type: "bool", default: "False" })
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[3]).toStrictEqual({ name: "bool_lgv2", type: "bool", default: "True" })
+
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[4]).toStrictEqual({ name: "int_lgv1", type: "int", default: "0" })
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[5]).toStrictEqual({ name: "int_lgv2", type: "int", default: "-100" })
+
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[6]).toStrictEqual({ name: "float_lgv1", type: "float", default: "0.0" })
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[7]).toStrictEqual({ name: "float_lgv2", type: "float", default: "1.0" })
+
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[8]).toStrictEqual({ name: "date_lgv1", type: "date", default: "'date(1,1,1)'" })
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[9]).toStrictEqual({ name: "date_lgv2", type: "date", default: "'date(10,10,10)'" })
+
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[10]).toStrictEqual({ name: "list_lgv1", type: "list", default: "[]" })
+    // @ts-ignore
+    expect(dialog.context[0].lgvs[11]).toStrictEqual({ name: "list_lgv2", type: "list", default: "['a','b','c']" })
+
+})

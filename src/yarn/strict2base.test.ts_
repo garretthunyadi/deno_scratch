@@ -1,0 +1,778 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import { StrictYarn } from "./strict_yarn.ts";
+import { lower, addSections, strict2base, _expand_composite_say } from "./strict2base.ts";
+import { BaseYarn } from "./base_yarn.ts";
+import { jlog } from "../Utils/utils.ts";
+import { SugarYarn } from "./sugar_yarn.ts";
+import { expect } from '../../deps.ts'
+const test = Deno.test
+
+// Try to identify and narrow particular named forms of IDL.
+//var R = require('ramda');
+import { R } from '../../deps.ts'
+
+let log = console.log
+// let jlog = (pre: string, x: any) => console.log(pre, ':', JSON.stringify(x, null, 2))
+
+type StrictOrBaseYarn = StrictYarn | BaseYarn;
+
+
+test("strict2base", () => {
+    let yarn: StrictYarn[] = [
+        { name: "hello {username}", if: "should_greet()", say: ["hello", "intro"], else: { say: "goodbye" } },
+        { ask: "how are you?", into: "how_are_you", type: "string" },
+        { ask: "how old are you2?", into_lgv: "age", type: "int" },
+    ]
+
+    let lookups = {
+
+    }
+
+    let { baseYarn, lgvs, vars } = strict2base(yarn, lookups)
+    expect(vars).toContainEqual({ name: "_how_are_you", type: "str" })
+    expect(lgvs).toContainEqual({ name: "age", type: "int" })
+})
+
+
+test("else", () => {
+    expect(lower(
+        { name: "overall_welcome_text", if: "first_day", say: "overall_welcome_text", else: { say: "welcome_back_text" } }
+    )).toEqual(
+        [
+            { section: "intro" },
+            { name: "overall_welcome_text", if: "first_day", say: "overall_welcome_text" },
+            { name: "overall_welcome_text", if: "not (first_day)", say: "welcome_back_text" }, // TODO: Known Issue: need to deal with duplicate names
+            { section: "end" },
+        ])
+})
+
+test("comment", () => {
+    expect(lower([{ say: "hi" }, { comment: "a comment only" }])).toEqual(
+        [
+            { section: "intro" }, { name: "hi", say: "hi" }, { section: "end" }
+
+        ])
+})
+
+test("golden/say", () => {
+    expect(lower({ say: "hello" })).toEqual(
+        [
+            { section: "intro" },
+            { name: "hello", say: "hello" },
+            { section: "end" }
+        ])
+
+    // names
+    expect(lower({ name: "hello_there", say: "hello" })).toEqual([{ section: "intro" }, { name: "hello_there", say: "hello" }, { section: "end" }])
+    expect(lower({ name: "hello there", say: "hello" })).toEqual([{ section: "intro" }, { name: "hello_there", say: "hello" }, { section: "end" }])
+    expect(lower({ name: "hello there", if: "something", say: "hello" })).toEqual([{ section: "intro" }, { name: "hello_there", if: "something", say: "hello" }, { section: "end" }])
+
+    // else
+    expect(lower(
+        { name: "hello there", if: "something", say: "hello", else: { say: "something-else" } }
+    )).toEqual(
+        [{ section: "intro" },
+        { name: "hello_there", if: "something", say: "hello" },
+        // { name: "hello_there_2", if: "not something", say: "something-else" } // TODO: Known Issue: need to deal with duplicate names
+        { name: "hello_there", if: "not (something)", say: "something-else" },
+        { section: "end" }
+        ])
+
+    // else with object
+    // { if: "first_day", say: "overall_welcome_text", else: { say: "welcome_back_text" } },
+    expect(lower(
+        { if: "first_day", say: "overall_welcome_text", else: { say: "welcome_back_text" } }
+    )).toEqual(
+        [{ section: "intro" },
+        { name: "overall_welcome_text", if: "first_day", say: "overall_welcome_text" },
+        { name: "welcome_back_text", if: "not (first_day)", say: "welcome_back_text" },
+        { section: "end" }
+        ])
+})
+
+test("golden/say w arrays", () => {
+    // multi-say
+    // jlog("multi-say", lower({ say: ["hello", "there"] }))
+    expect(lower({ say: ["hello", "there"] })).toEqual(
+        [
+            { section: "intro" },
+            // { name: "hello_1", say: "hello" },
+            // { name: "hello_2", say: "there" },
+            { name: "hello", say: "hello" },
+            { name: "there", say: "there" },
+            { section: "end" }
+        ])
+})
+
+test("golden/composite say w arrays", () => {
+    // multi-say
+    let yarn = { say: [{ say: "hello" }, { say: "there" }] }
+    // @ts-ignore
+    let res = lower(yarn)
+    // jlog("multi-say", res)
+    expect(res).toEqual(
+        [
+            { section: "intro" },
+            // { name: "hello_1", say: "hello" },
+            // { name: "hello_2", say: "there" },
+            { name: "hello", say: "hello" },
+            { name: "there", say: "there" },
+            { section: "end" }
+        ])
+})
+
+test("_expand_composite_say", () => {
+    let yarn = { say: [{ say: "hello" }, { say: "there" }] }
+    let res = _expand_composite_say(yarn)
+
+    expect(res).toEqual(
+        [
+            { say: "hello" },
+            { say: "there" }
+        ])
+})
+
+test("desugar/else helper", () => {
+    let o: StrictYarn = { if: "coming", say: "hi", else: { say: 'bye' } }
+    let res = lower(o)
+    expect(res).toStrictEqual(
+        [
+            { section: "intro" },
+            { name: "hi", if: "coming", say: "hi" },
+            { name: "bye", if: "not (coming)", say: "bye" },
+            { section: "end" }
+        ]
+    )
+
+    // currently not valid IDL
+    // o = { if: "coming", say: ["hi", "there"], else: [{ say: "bye" }, { say: "now" }] }
+    // res = lower(o)
+    // expect(res).toStrictEqual(
+    //     [
+    //         { if: "coming", say: ["hi", "there"] },
+    //         { if: "not:coming", say: ["bye", "now"] }
+    //     ]
+    // )
+})
+
+test("desugar/else", () => {
+    let o: StrictYarn = { if: "coming", say: "hi", else: { say: 'bye' } }
+    let res = lower(o)
+    expect(res).toStrictEqual(
+        [
+            { section: "intro" },
+            { name: "hi", if: "coming", say: "hi" },
+            { name: "bye", if: "not (coming)", say: "bye" },
+            { section: "end" }
+        ]
+    )
+
+})
+test("desugar/else2", () => {
+    // @ts-ignore
+    let o = { if: "coming", say: ["hi", "there"], else: ["bye", "now"] }
+    let res = lower(o)
+    expect(res).toStrictEqual(
+        [
+            { section: "intro" },
+            // { name: "hi_1", if: "coming", say: "hi" },
+            // { name: "hi_2", if: "coming", say: "there" },
+            // { name: "bye_1", if: "not (coming)", say: "bye" },
+            // { name: "bye_2", if: "not (coming)", say: "now" },
+            { name: "hi", if: "coming", say: "hi" },
+            { name: "there", if: "coming", say: "there" },
+            { name: "bye", if: "not (coming)", say: "bye" },
+            { name: "now", if: "not (coming)", say: "now" },
+            { section: "end" }
+        ]
+    )
+})
+
+test.skip("desugar/else - with boolean literal", () => {
+    let o: StrictYarn = { if: "true", say: "hi", else: { say: 'bye' } }
+    let res = lower(o)
+    expect(res).toStrictEqual(
+        [
+            { section: "intro" },
+            { name: "hi", if: "True", say: "hi" },
+            { name: "bye", if: "not (True)", say: "bye" },
+            { section: "end" }
+        ]
+    )
+
+})
+
+
+/*
+   NAMING NODES
+    - Names are keyified, but never replaced (looked up in the lookup table)
+ 
+   {say: "hello"} -> {name: "hello", say: "hello"}
+ 
+   keyify: {name: "hello", say: "hello"} -> {name: "hello", say: "hello"}
+ 
+   When expanding nodes:
+    The orig node keeps it's name
+    Additional nodes get "_2", "_3", etc appended.   
+*/
+
+test("strip comments", () => {
+    let _: StrictOrBaseYarn[] = [
+        { say: "hello", comment: "coments can be used for skinning, but will not pass through to HPML" },
+        { say: "hello" },
+
+        // TODO.. embedded comments
+    ]
+})
+test("fill in 'into' field", () => {
+    let _: StrictOrBaseYarn[] = [
+        { name: "whats_your_name?", ask: "What's your name?" },
+        { name: "whats_your_name?", ask: "what's your name?", into: "whats_your_name?_answer" },
+    ]
+})
+test("expand question options", () => {
+    let _: StrictOrBaseYarn[] = [
+        { name: "feeling?", ask: "How are you feeling?", options: ["good", "bad"] },
+        // Option keywords must be retained (not just replaced) in order to be used as values.
+        // so... (1) expand form, and (2) replace
+        { name: "feeling?", ask: "How are you feeling?", options: [["good", "good"], ["bad", "bad"]] }, // expand to use keywords as values
+        { name: "feeling?", ask: "How are you feeling?", options: [["I'm good 😊", "good"], ["Not too great right now 😔", "bad"]] },]
+})
+
+test('multiple choice', () => {
+    let yarn: StrictYarn[] = [
+        {
+            ask: "race?",
+            into_lgv: 'tr_race',
+            require: 'multiple_input',
+            options: [
+                [
+                    "asian pacific islander",
+                    "asian pacific islander"
+                ],
+                [
+                    "white",
+                    "white"
+                ],
+                [
+                    "other",
+                    "other"
+                ],
+                [
+                    "None",
+                    "None"
+                ]
+            ],
+        },
+    ]
+    let res = lower(yarn)
+    // @ts-ignore
+    expect(res[1]).toHaveProperty("type", "list")
+})
+
+/*
+test("multi w conditional", () => {
+    let lookups = {
+        "hello": "Hello",
+        "intro": "Hi there!",
+        "good": "Great!",
+        "bad": "Not great!",
+        "condition": "should_greet()",
+    }
+    let _: StrictOrBaseYarn[] = [
+        { if: "condition", say: ["hello", "intro"] },
+        // expand condition
+        { if: "should_greet()", say: ["hello", "intro"] },
+
+        // detail
+        { name: "hello", if: "should_greet()", say: ["hello", "intro"], else: "goodbye" },
+        { name: "hello", if: "should_greet()", say: ["Hello", "I'm Anna"], else: "See you soon!" },
+
+        // expand - arrays
+        { name: "hello", if: "should_greet()", say: "Hello", else: "See you soon!" },
+        { name: "hello", if: "should_greet()", say: "I'm Anna", else: "See you soon!" },
+
+        // expand - else
+        { name: "hello", if: "not should_greet()", say: "See you soon!" },
+
+        // expand all 'if; conditions and then expand the 'else' condition/s
+        { name: "hello", if: "not should_greet()", say: "See you soon!" }, // can "not <condition>" work catagorically?
+    ]
+})
+*/
+
+/*
+    Sections
+*/
+test("addSections", () => {
+    let yarn: StrictYarn[] = [
+        { name: "hello", say: "Hello" },
+    ]
+
+    // should start with a 'intro' section
+    // and have an 'end' section
+    expect(addSections(yarn)).toStrictEqual([
+        { section: "intro" },
+        { name: "hello", say: "Hello" },
+        { section: "end" },
+    ])
+
+    expect(lower(yarn)).toStrictEqual([
+        { section: "intro" },
+        { name: "hello", say: "Hello" },
+        { section: "end" },
+    ])
+})
+
+
+/*
+    Algo:
+ 
+    Notes:
+        ELSE-BEFORE_SAY:  Else needs to be expanded before 'say' expansion, or else an example like the following will fail:
+          { if: "say_hello", say: ["hello", "intro"], else: ["summary", "goodbye"] }, 
+          with say 'hello' duplicated.
+ 
+    Requirements:
+    - name is first, early
+    - name must be unique, so need a running check
+    - comments must be stripped
+    - any "multis" (arrays) must be expanded to individual items/nodes
+ 
+    Before: "macro-expand" strings and arrays into proper nodes
+ 
+    In no partucular order:
+    - strip comments
+ 
+    #. fill in name
+        - if name is not set, the say/or ask content should be used
+        - the name should be "keyified" (lowercased and underscored)
+    #. lookup say/ask content
+    #. lookup ifs
+    #. lookup elses
+    #. lookup ...
+    
+    #. expand lookups (in what order?)
+    #          Else needs to be expanded before say expansion, or else an example like the following will fail:
+         { if: "say_hello", say: ["hello", "intro"], else: ["summary", "goodbye"] },
+ 
+    #. fill in 'into' field
+    #. expand question options
+ 
+    #. expand name multis (if I have these - not starting with them)
+    // #. expand if multis (no if multis)
+    #. expand else multis (to "not <condition>")  // ELSE-BEFORE_SAY
+    #. expand multi-say // needs to be after expanded else's
+    #. expand multi-ask
+    #. expand ack
+    #. expand delay
+*/
+
+/*
+test("expand multi else", () => {
+    let _: StrictOrBaseYarn[] = [
+        { if: "say_hello", say: ["hello", "intro"], else: ["summary", "goodbye"] },
+
+        // expand else
+        { if: "say_hello", say: ["hello", "intro"] },
+        { if: "not say_hello", say: ["summary", "goodbye"] },
+
+        // // expand-say
+        // [ 
+        //     { if: "say_hello", say: "hello", else: ["summary", "goodbye"] },
+        //     { if: "say_hello", say: "intro", else: ["summary", "goodbye"] }
+        // ],
+
+        // // expand-else
+        // [
+        //     { if: "say_hello", say: "hello", else: "summary" },
+        //     { if: "say_hello", say: "hello", else: "goodbye" },
+        //     { if: "say_hello", say: "intro", else: "summary" },
+        //     { if: "say_hello", say: "intro", else: "goodbye" }
+        // ],
+
+        // [
+        //     { if: "say_hello", say: "hello" },
+        //     { if: "not say_hello", say: "summary" },
+        //     { if: "say_hello", say: "hello" },
+        //     { if: "not say_hello", say: "goodbye" },
+        //     { if: "say_hello", say: "intro" },
+        //     { if: "not say_hello", say: "summary" },
+        //     { if: "say_hello", say: "intro" },
+        //     { if: "not say_hello", say: "goodbye" }
+        // ],
+
+        // detail
+        { name: "hello", if: "say_hello", say: ["hello", "intro"], else: ["summary", "goodbye"] },
+        { name: "hello", if: "say_hello", say: ["Hello", "I'm Anna"], else: ["That's good for now.", "See you soon!"] },
+
+        // expand - arrays
+        { name: "hello", if: "say_hello", say: "Hello", else: ["That's good for now.", "See you soon!"] },
+        { name: "hello", if: "say_hello", say: "I'm Anna", else: ["That's good for now.", "See you soon!"] },
+
+        // expand - else
+        { name: "hello", if: "say_hello", say: "I'm Anna", else: ["That's good for now.", "See you soon!"] },
+
+        // expand all 'if; conditions and then expand the 'else' condition/s
+        { name: "hello", if: "not say_hello", say: "See you soon!" }, // can "not <condition>" work catagorically?
+    ]
+
+})
+*/
+test("expand (single) ack", () => {
+    let _: (StrictYarn | BaseYarn)[] = [
+        { name: "hello", say: "Hello there", ack: "Hi!" },
+        { name: "hello", say: "Hello there" },
+        // note the _ack is added to the name
+        // @ts-ignore
+        { name: "hello_ack", ack: "Hi!" }, // new base-level form that converts to hpml
+    ]
+})
+
+test("expand w multiple sets #1", () => {
+    let _: StrictOrBaseYarn[] = [
+
+    ]
+})
+test("expand w multiple sets #2", () => {
+    let _: StrictOrBaseYarn[] = [
+
+    ]
+})
+
+test("expand require single", () => {
+    let _: StrictOrBaseYarn[] = [
+        {
+            ask: "What's a nice aspect of the situation?",
+            require: ["positive_statment", { say: 'Try rephrasing in a more positive way.' }]
+        },
+        { // name
+            name: "whats_a_nice_aspect_of_the_situation?",
+            ask: "What's a nice aspect of the situation?",
+            require: ["positive_statment", { say: 'Try rephrasing in a more positive way.' }]
+        },
+        { // sensor type
+            name: "whats_a_nice_aspect_of_the_situation?",
+            ask: "What's a nice aspect of the situation?",
+            require: ["positive_statment", { say: 'Try rephrasing in a more positive way.' }],
+            type: 'string',
+        },
+        { // into
+            name: "whats_a_nice_aspect_of_the_situation?",
+            ask: "What's a nice aspect of the situation?",
+            into: "whats_a_nice_aspect_of_the_situation?_answer",
+            type: 'string',
+            require: ["positive_statment", { say: 'Try rephrasing in a more positive way.' }],
+        },
+        // there's no lookup for "positive_statment", so it passes to the backend
+        {
+            name: "whats_a_nice_aspect_of_the_situation?",
+            ask: "What's a nice aspect of the situation?",
+            into: "whats_a_nice_aspect_of_the_situation?_answer",
+            type: 'string',
+            then: [
+                {
+                    set: 'whats_a_nice_aspect_of_the_situation?_require_positive_statment',
+                    to: 'positive_statment()'
+                },
+                {
+                    if: 'whats_a_nice_aspect_of_the_situation?_require_positive_statment',
+                    goto: 'whats_a_nice_aspect_of_the_situation'
+                }
+            ]
+        },
+    ]
+})
+test("expand require multi", () => {
+    let _: StrictOrBaseYarn[] = [
+        {
+            ask: "Can you say that in a positive way?", into: "a_positive_thought",
+            require: [
+                ["long_enough?", { say: 'Try rephrasing in a more positive way.' }],
+                ["positive_statment?", { say: 'Try rephrasing in a more positive way.' }]
+            ],
+        }
+
+    ]
+})
+
+test("bogus", () => {
+    let _: StrictOrBaseYarn[] = [
+        // "hello",
+        // ["hello", "goodbye"],
+        { say: "hello" },
+        { say: "hello", comment: "coments can be used for skinning, but will not pass through to HPML" },
+        { say: "hello?" },
+        { say: ["hello", "world"] },
+        { if: "condition", say: "hello" },
+        { if: "condition", say: ["hello", "world"] },
+        // { if: "condition", say: "hello", else: "goodbye" },
+        // { if: "condition", say: ["hello", "world"], else: "goodbye" },
+        // { if: "condition", say: "hello", else: ["goodbye", "world"] },
+        // { if: "condition", say: ["hello", "world"], else: ["goodbye", "world"] },
+
+        // name can be explicitly set, or will be autogenerated based on the say/ask text
+        { name: "hello", say: "hi" },
+        { name: "hello", ask: "hi", into: "var" },
+
+        // delay
+        { say: "hi", delay: 1000 }, // milliseconds, or should we make it more user friendly, like a float in secs?
+        // { say: {"hello", "world"], delay: [2, 1] },
+
+        // ack
+        { say: "hello", ack: "hi" },
+        { say: ["hello", "world"], ack: "hi" },
+        { if: "condition", say: "hello", ack: "hi" },
+        { if: "condition", say: ["hello", "world"], ack: "hi" },
+        // { if: "condition", say: "hello", ack: "hi", else: "goodbye" },
+        // { if: "condition", say: ["hello", "world"], ack: "hi", else: "goodbye" },
+        // { if: "condition", say: "hello", ack: "hi", else: ["goodbye", "world"] },
+        // { if: "condition", say: ["hello", "world"], ack: "hi", else: ["goodbye", "world"] },
+        // { if: "condition", say: "hello", ack: ["hi #1", "hi #2"], else: ["goodbye", "world"] }, // prob not useful, but valid
+
+        // ask
+        { ask: "hello?", into: "var" },
+        { ask: ["hello?", "world?"], into: "var", require: "natural_number" }, // TODO: need to settle on how to specify the type
+        { if: "condition", ask: "hello?", into: "var" },
+        { if: "condition", ask: ["hello?", "world?"], into: "var" },
+
+        // into_lgv
+        { ask: "hello?", into_lgv: "lgv1" }, // with a value set in the CMS
+        { ask: "hello?", into_lgv: "lgv2", require: { min: 0, max: 10 } }, // with a value set in the CMS
+
+        { ask: ["hello?", "world?"], into_lgv: "lgv1" },
+        { if: "condition", ask: "hello?", into_lgv: "lgv1" },
+        { if: "condition", ask: ["hello?", "world?"], into_lgv: "lgv1" },
+
+        // { if: "condition", ask: "hello?", into: "var", else: "goodbye" },
+        // { if: "condition", ask: ["hello?", "world?"], into: "var", else: "goodbye" },
+        // { if: "condition", ask: "hello?", into: "var", else: ["goodbye", "world"] },
+        // { if: "condition", ask: ["hello?", "world?"], into: "var", else: ["goodbye", "world"] },
+
+
+        // options
+        { ask: "hello?", into: "var", options: ["hi", "bye"] },
+        { ask: "hello?", into: "var", options: [["Option 1", "value1"], ["Option 2", "value2", { say: "Bye now!" }]] },
+        { ask: "hello?", into: "var", options: [["Option 1", "value1", { goto: "end" }], ["Option 2", "value2", { say: "Bye now!" }]] },
+        { ask: "hello?", into: "var", options: [["Say Hello", { say: "Howdy!" }], ["Say Goodbye", { say: "Bye now!" }]] },
+        // { ask: "hello?", into: "var", options: ["first", ["second", { say: "Second!" }]] },
+
+
+        { ask: ["hello?", "world?"], into: "var", options: ["Hi", "Bye"] }, // invalid?  or just say two things?  Odd, but valid
+        { if: "condition", ask: "hello?", into: "var", options: ["Hi", "Bye"] },
+
+
+        // requirements / as limits on non-text inputs
+        { ask: "How many things can you think of?", into: "int_var", require: { min: 1, max: 10 } },
+
+        // requirements for text inputs, including adherance fidelity (the implementation of 
+        // sensor checks is eiter in a lookup, or in a backend function)
+        {
+            ask: "Can you say that in a positive way?", into: "a_positive_thought",
+            require: ["positive_statment", { say: 'Try rephrasing in a more positive way.' }]
+        },
+        {
+            ask: "Can you say that in a positive way?", into: "a_positive_thought",
+            require: [
+                ["long_enough?", { say: 'Try rephrasing in a more positive way.' }],
+                ["positive_statment?", { say: 'Try rephrasing in a more positive way.' }]
+            ],
+        }
+    ]
+})
+
+describe("undersore generation", () => {
+
+    test("into", () => {
+        let { baseYarn } = strict2base({
+            name: "x",
+            ask: "hello?",
+            into: "x_answer",
+            // type: "string",
+            // options: [
+            //     ["Option 1", "value1"],
+            //     ["Option 2", "value2"]
+            // ]
+        }, {})
+
+        expect(baseYarn).toContainEqual(
+            {
+                name: "x",
+                ask: "hello?",
+                into: "_x_answer",
+                type: "string",
+                // options: [
+                //     ["Option 1", "value1"],
+                //     ["Option 2", "value2"]
+                // ]
+            }
+        )
+    })
+
+    test("into_lgv", () => {
+        let { baseYarn } = strict2base({
+            name: "x",
+            ask: "hello?",
+            into_lgv: "x_answer",
+            // type: "string",
+            // options: [
+            //     ["Option 1", "value1"],
+            //     ["Option 2", "value2"]
+            // ]
+        }, {})
+
+        expect(baseYarn).toContainEqual(
+            {
+                name: "x",
+                ask: "hello?",
+                into: "x_answer",
+                type: "string",
+                // options: [
+                //     ["Option 1", "value1"],
+                //     ["Option 2", "value2"]
+                // ]
+            }
+        )
+    })
+
+})
+/*
+test("say literal strings", () => {
+    expect(expand({ say: "hello", ack: "hi" })).toStrictEqual(
+        {
+            say: "hello",
+        }
+    )
+ 
+})
+ 
+ 
+test("simple ask", () => {
+    expect(expand({ ask: "really?", options: [['Yes', 1], ['No', 2]], into: "_ans" })).toStrictEqual(
+        {
+            "name": "really?",
+            "ask": {
+                "prompts": [
+                    "really?"
+                ]
+            },
+            "input": {
+                "single": [
+                    {
+                        "1": "Yes"
+                    },
+                    {
+                        "2": "No"
+                    }
+                ]
+            },
+            "post_calc": [
+                {
+                    "variable": "_ans",
+                    "value": "int(sensor)"
+                }
+            ]
+        })
+})
+ 
+ 
+test("boolean ask", () => {
+    expect(expand({ ask: "really?", options: [[true, 'Yes'], [false, 'No']], into: "_ans" })).toStrictEqual(
+        {
+            "name": "really?",
+            "ask": {
+                "prompts": [
+                    "really?"
+                ]
+            },
+            "input": {
+                "single": [
+                    {
+                        "true": "Yes"
+                    },
+                    {
+                        "false": "No"
+                    }
+                ]
+            },
+            "post_calc": [
+                {
+                    "variable": "_ans",
+                    "value": "bool(sensor)"
+                }
+            ]
+        }
+    )
+})
+ 
+test("actions", () => {
+    expect(expand({
+        if: "some_condition",
+        say: "a comment",
+        then: { goto: "end" },
+    })).toStrictEqual({
+        name: "a_comment",
+        condition: "some_condition",
+        ask: {
+            prompts: [
+                "a comment"
+            ]
+        },
+        next: [
+            {
+                goto: "end"
+            }
+        ]
+    });
+});
+ 
+ 
+test("ask w/ actions", () => {
+    let form = {
+        ask: "do you feel better?", options: [
+            ["Yes", { say: "Great!" }],
+            ["Not really", { say: "Let's keep working on it" }]]
+    }
+ 
+    let expected = {
+        "name": "do_you_feel_better?",
+        "ask": {
+            prompts: [
+                "do you feel better?"
+            ]
+        },
+        input: {
+            single: [
+                {
+                    "0": "Yes"
+                },
+                {
+                    "1": "Not really"
+                }
+            ]
+        },
+        post_calc: [
+            {
+                "variable": "_ans",
+                "value": "int(sensor)"
+            }
+        ],
+        next: [
+            {
+                condition: "_ans == 0",
+                text: "Great!"
+            },
+            {
+                condition: "_ans == 1",
+                text: "Let's keep working on it"
+            }
+        ]
+    }
+ 
+    // console.log(JSON.stringify(expand(form), null, 2))
+    expect(expand(form)).toStrictEqual(expected)
+ 
+})
+ 
+*/

@@ -1,0 +1,190 @@
+{
+  "sugarYarn": [
+    {
+      "ask": "How are you?"
+    },
+    {
+      "if": "is_positive",
+      "say": "Good to hear!"
+    },
+    {
+      "if": "is_negative",
+      "say": "Oh, I'm sorry to hear that."
+    },
+    {
+      "say": "ok, let's get on with it..."
+    },
+    {
+      "goto": "intro"
+    }
+  ],
+  "strictYarn": [
+    {
+      "ask": "How are you?"
+    },
+    {
+      "if": "is_positive",
+      "say": "Good to hear!"
+    },
+    {
+      "if": "is_negative",
+      "say": "Oh, I'm sorry to hear that."
+    },
+    {
+      "say": "ok, let's get on with it..."
+    },
+    {
+      "goto": "intro"
+    }
+  ],
+  "baseYarn": [
+    {
+      "section": "intro"
+    },
+    {
+      "ask": "How ya doin'?",
+      "name": "how_are_you_question",
+      "type": "string",
+      "into": "_how_are_you_question_answer"
+    },
+    {
+      "if": "(nlc('pos_neg_neutral', _how_are_you_question_answer)['top_class'] if nlc('pos_neg_neutral',_how_are_you_question_answer)['classes'][0]['confidence'] > 0.65 else 'undetermined') == 'positive'",
+      "say": "Good to hear!",
+      "name": "good_to_hear_"
+    },
+    {
+      "if": "(nlc('pos_neg_neutral', _how_are_you_question_answer)['top_class'] if nlc('pos_neg_neutral',_how_are_you_question_answer)['classes'][0]['confidence'] > 0.65 else 'undetermined') == 'negative'",
+      "say": "Oh, I'm sorry to hear that.",
+      "name": "oh__im_sorry_to_hear_that_"
+    },
+    {
+      "say": "ok, let's get on with it...",
+      "name": "ok__lets_get_on_with_it___"
+    },
+    {
+      "goto": "intro",
+      "name": "intro"
+    },
+    {
+      "section": "end"
+    }
+  ],
+  "sections": [
+    {
+      "name": "intro",
+      "nodes": [
+        {
+          "name": "how_are_you_question",
+          "ask": {
+            "prompts": [
+              "How ya doin'?"
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "_last_text_input",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "_how_are_you_question_answer",
+              "value": "str(sensor)"
+            }
+          ]
+        },
+        {
+          "name": "good_to_hear_",
+          "condition": "(nlc('pos_neg_neutral', _how_are_you_question_answer)['top_class'] if nlc('pos_neg_neutral',_how_are_you_question_answer)['classes'][0]['confidence'] > 0.65 else 'undetermined') == 'positive'",
+          "ask": {
+            "prompts": [
+              "Good to hear!"
+            ]
+          },
+          "input": {
+            "interim": true
+          }
+        },
+        {
+          "name": "oh__im_sorry_to_hear_that_",
+          "condition": "(nlc('pos_neg_neutral', _how_are_you_question_answer)['top_class'] if nlc('pos_neg_neutral',_how_are_you_question_answer)['classes'][0]['confidence'] > 0.65 else 'undetermined') == 'negative'",
+          "ask": {
+            "prompts": [
+              "Oh, I'm sorry to hear that."
+            ]
+          },
+          "input": {
+            "interim": true
+          }
+        },
+        {
+          "name": "ok__lets_get_on_with_it___",
+          "ask": {
+            "prompts": [
+              "ok, let's get on with it..."
+            ]
+          },
+          "input": {
+            "interim": true
+          }
+        },
+        {
+          "name": "intro",
+          "calc": {
+            "variable": "_bogus",
+            "value": "'bogus'"
+          },
+          "next": [
+            {
+              "goto": "intro"
+            }
+          ]
+        }
+      ],
+      "sequential": true
+    },
+    {
+      "name": "end",
+      "sequential": true,
+      "condition": true,
+      "nodes": [
+        {
+          "name": "end",
+          "ask": {
+            "prompts": [
+              ""
+            ]
+          },
+          "input": {
+            "end": true
+          }
+        }
+      ]
+    }
+  ],
+  "vars": [
+    {
+      "name": "_last_text_input",
+      "type": "str"
+    },
+    {
+      "name": "_bogus",
+      "type": "str"
+    },
+    {
+      "name": "_how_are_you_question_answer",
+      "type": "str"
+    }
+  ],
+  "lgvs": [],
+  "lookupKeys": [
+    "How are you?",
+    "Good to hear!",
+    "Oh, I'm sorry to hear that.",
+    "ok, let's get on with it...",
+    "is_positive",
+    "is_negative",
+    "pos_neg_neut_top_class"
+  ]
+}

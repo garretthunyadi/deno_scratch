@@ -1,0 +1,1265 @@
+{
+  "name": "Setbacks and Steps Forward",
+  "description": "Activity 3, Part 2, CNT",
+  "author": "Derrick",
+  "created": "2017-11-20",
+  "updated": "2017-11-20",
+  "start": "intro",
+  "context": [
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "folder": "handler_vars"
+      }
+    },
+    {
+      "include": {
+        "dialog": "Threshold-Source-Code",
+        "folder": "threshold_vars"
+      }
+    },
+    {
+      "folder": "intro",
+      "variables": [
+        {
+          "name": "sensor_text",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "stat_completed_activities",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "person_statement",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "name_list",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_situation",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_situation2",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_situation_specific",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_negative",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_positive",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_reflection",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_negative2",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_negemotion",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_posemotion",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_positive2",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "setback_reflection2",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "_emotion",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "_emotion_phrase",
+          "type": "str",
+          "value": "''"
+        },
+        {
+          "name": "_num_tries",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "_word_count",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "_word_count2",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "_word_count3",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "_word_count4",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "_situation_known",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "_tense_temp",
+          "type": "int",
+          "value": "0"
+        },
+        {
+          "name": "_past",
+          "type": "bool",
+          "value": "True"
+        },
+        {
+          "name": "_specific",
+          "type": "bool",
+          "value": "True"
+        },
+        {
+          "name": "_negemotion",
+          "type": "bool",
+          "value": "True"
+        },
+        {
+          "name": "_posemotion",
+          "type": "bool",
+          "value": "True"
+        },
+        {
+          "name": "_other",
+          "type": "bool",
+          "value": "True"
+        }
+      ]
+    }
+  ],
+  "handler_sections": [
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "handler_section": "exempt_garbage"
+      }
+    },
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "handler_section": "garbage"
+      }
+    },
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "handler_section": "faq"
+      }
+    },
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "handler_section": "self_harm"
+      }
+    },
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "handler_section": "self_harm_again"
+      }
+    },
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "handler_section": "unsure"
+      }
+    },
+    {
+      "include": {
+        "dialog": "Handler-Source-Code",
+        "handler_section": "no_garbage"
+      }
+    }
+  ],
+  "sections": [
+    {
+      "name": "intro",
+      "condition": true,
+      "sequential": true,
+      "nodes": [
+        {
+          "name": "greeting1",
+          "ask": {
+            "prompts": [
+              "We all have setbacks and adversities in our past that bring up negative thoughts for us."
+            ],
+            "random": false
+          },
+          "input": {
+            "intro": true
+          }
+        },
+        {
+          "name": "greeting2",
+          "delay": 3500,
+          "ask": {
+            "prompts": [
+              "When you can see both how you've suffered from these situations and also acknowledge the good these situations have brought about, you enrich your memories and avoid getting stuck in the negative."
+            ],
+            "random": false
+          },
+          "input": {
+            "intro": true
+          }
+        },
+        {
+          "name": "greeting3",
+          "delay": 3500,
+          "ask": {
+            "prompts": [
+              "In this activity, you will identify a situation like this for you and reflect on both the downside and the upside of it."
+            ],
+            "random": false
+          },
+          "input": {
+            "single": [
+              {
+                "0": "Let's start."
+              }
+            ]
+          },
+          "next": [
+            {
+              "text": "OK",
+              "goto": "identify"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "identify",
+      "condition": true,
+      "sequential": false,
+      "nodes": [
+        {
+          "name": "ask_situation",
+          "condition": "_situation_known == 0",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "Do you have a situation in mind from your past that still brings up negative thoughts for you?"
+            ]
+          },
+          "input": {
+            "single": [
+              {
+                "1": "Yes, I have a situation in mind."
+              },
+              {
+                "2": "No, I don't have one in mind."
+              }
+            ]
+          },
+          "post_calc": [
+            {
+              "variable": "_situation_known",
+              "value": "int(sensor)"
+            }
+          ],
+          "next": [
+            {
+              "text": "OK"
+            }
+          ]
+        },
+        {
+          "name": "identify_situation",
+          "condition": "_situation_known == 1 and setback_situation == ''",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "What is the situation you're thinking of?",
+              "What is a situation from your past that you have negative thoughts about?",
+              "What is a major adversity or setback you faced in your life?"
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "This can be anything negative experience, from a trauma, to a major disappointment, to something you felt you failed at, or even a choice you made that you regret. Think of an experience like this from your past. Maybe one where your anxiety got the best of you. What comes to mind?"
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_situation",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "sensor_text",
+              "value": "setback_situation"
+            },
+            {
+              "variable": "_past",
+              "value": "False if sensor.nlc('time_orientation')['top_class'] == 'future' and sensor.nlc('time_orientation')['classes'][0]['confidence'] > _tense_threshold else False if sensor.nlc('time_orientation')['top_class'] == 'present' and sensor.nlc('time_orientation')['classes'][0]['confidence'] > _tense_threshold else True"
+            },
+            {
+              "variable": "_specific",
+              "value": "True if sensor.nlc('specific')['top_class'] == 'specific' and sensor.nlc('specific')['classes'][0]['confidence'] > _specificity_threshold else False"
+            },
+            {
+              "variable": "_word_count",
+              "value": "len(split(setback_situation))"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            }
+          ],
+          "next": [
+            {
+              "condition": "_word_count >= 10",
+              "call": {
+                "dialog": "Person-Interview",
+                "parameters": [
+                  "sensor_text"
+                ],
+                "return": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "identify_situation2",
+          "condition": "_word_count > 0 and _word_count < 10",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "Explain more about the situation. What happened and how did it affect you?"
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_situation2",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "sensor_text",
+              "value": "setback_situation+' '+setback_situation2"
+            },
+            {
+              "variable": "_past",
+              "value": "False if nlc('time_orientation', setback_situation+' '+setback_situation2)['top_class'] == 'future' and nlc('time_orientation', setback_situation+' '+setback_situation2)['classes'][0]['confidence'] > _tense_threshold else False if nlc('time_orientation', setback_situation+' '+setback_situation2)['top_class'] == 'present' and nlc('time_orientation', setback_situation+' '+setback_situation2)['classes'][0]['confidence'] > _tense_threshold else True"
+            },
+            {
+              "variable": "_specific",
+              "value": "True if nlc('specific', setback_situation+' '+setback_situation2)['top_class'] == 'specific' and nlc('specific', setback_situation+' '+setback_situation2)['classes'][0]['confidence'] > _specificity_threshold else False"
+            },
+            {
+              "variable": "_word_count",
+              "value": "11"
+            }
+          ],
+          "next": [
+            {
+              "call": {
+                "dialog": "Person-Interview",
+                "parameters": [
+                  "sensor_text"
+                ],
+                "return": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "choose_situation",
+          "condition": "_situation_known == 2",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "Let's think of a negative experience you had in the past. Maybe something that didn't go the way you hoped or wanted, or a situation in which anger got the best of you. What experience from your past has some negative feelings attached to it?",
+              "What is a situation from your past that you have negative thoughts about?",
+              "What is a major adversity or setback you faced in your life?"
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "This can be anything negative experience, from a trauma, to a major disappointment, to something you felt you failed at, or even a choice you made that you regret. Think of an experience like this from your past. Maybe one where your anxiety got the best of you. What comes to mind?"
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_situation",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "sensor_text",
+              "value": "setback_situation"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            },
+            {
+              "variable": "_situation_known",
+              "value": "1"
+            },
+            {
+              "variable": "_past",
+              "value": "False if sensor.nlc('time_orientation')['top_class'] == 'future' and sensor.nlc('time_orientation')['classes'][0]['confidence'] > _tense_threshold else False if sensor.nlc('time_orientation')['top_class'] == 'present' and sensor.nlc('time_orientation')['classes'][0]['confidence'] > _tense_threshold else True"
+            },
+            {
+              "variable": "_specific",
+              "value": "True if sensor.nlc('specific')['top_class'] == 'specific' and sensor.nlc('specific')['classes'][0]['confidence'] > _specificity_threshold else False"
+            },
+            {
+              "variable": "_word_count",
+              "value": "len(split(setback_situation))"
+            }
+          ],
+          "next": [
+            {
+              "condition": "_word_count >= 10",
+              "call": {
+                "dialog": "Person-Interview",
+                "parameters": [
+                  "sensor_text"
+                ],
+                "return": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "situation_past",
+          "condition": "_past == False and _tense_temp == 0",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "This activity works best when using experiences more than a year ago in your past. Is this a situation that happened in your past?"
+            ]
+          },
+          "input": {
+            "single": [
+              {
+                "1": "Yes, it was more than a year ago."
+              },
+              {
+                "2": "No, it's recent and/or ongoing."
+              }
+            ]
+          },
+          "post_calc": [
+            {
+              "variable": "_tense_temp",
+              "value": "int(sensor)"
+            },
+            {
+              "variable": "setback_situation",
+              "value": "'' if _tense_temp == 2 else setback_situation"
+            }
+          ],
+          "next": [
+            {
+              "condition": "_tense_temp == 2",
+              "text": "Let's think of something that happened more than a year ago."
+            }
+          ]
+        },
+        {
+          "name": "situation_specific",
+          "condition": "_specific == False",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "What were the details of the experience? To the extent that you are able, explain what happened and what thoughts or feelings you have about it now."
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_situation_specific",
+              "value": "str(sensor)"
+            }
+          ],
+          "next": [
+            {
+              "text": "OK, thanks.",
+              "goto": "negative"
+            }
+          ]
+        },
+        {
+          "name": "situation_done",
+          "condition": "setback_situation != '' and _word_count > 10 and (_past == True or _tense_temp != 0)",
+          "ask": {
+            "prompts": [
+              "OK, thanks."
+            ]
+          },
+          "input": {
+            "intro": true
+          },
+          "next": [
+            {
+              "goto": "negative"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "negative",
+      "condition": true,
+      "sequential": true,
+      "nodes": [
+        {
+          "name": "get_negative",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "First, it's important to acknowledge what was hard about the adversity. What about this situation was difficult or challenging for you?",
+              "What about this situation was difficult or challenging for you?",
+              "What was the hardest part of this situation?"
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "Put yourself back in that situation mentally and remember what you had a hard time with. Describe it."
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_negative",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "_negemotion",
+              "value": "False if sensor.nlc('pos_neg_neutral')['top_class'] == 'positive' and sensor.nlc('pos_neg_neutral')['classes'][0]['confidence'] > _emotvalence_threshold else True"
+            },
+            {
+              "variable": "_emotion",
+              "value": "sensor.nlc('robinson_emotions')['top_class'] if sensor.nlc('robinson_emotions')['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            },
+            {
+              "variable": "_word_count2",
+              "value": "len(split(setback_negative))"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            }
+          ],
+          "next": [
+            {
+              "text": "OK"
+            }
+          ]
+        },
+        {
+          "name": "getmore_negative",
+          "condition": "_word_count2 < 10",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "If you can say more about this without feeling too uncomfortable, describe in a little more detail what aspects of this situation were hardest for you."
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_negative2",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "_negemotion",
+              "value": "False if nlc('pos_neg_neutral', setback_negative+' '+setback_negative2)['top_class'] == 'positive' and nlc('pos_neg_neutral', setback_negative+' '+setback_negative2)['classes'][0]['confidence'] > _emotvalence_threshold else _negemotion"
+            },
+            {
+              "variable": "_emotion",
+              "value": "nlc('robinson_emotions', setback_negative+' '+setback_negative2)['top_class'] if nlc('robinson_emotions', setback_negative+' '+setback_negative2)['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            }
+          ],
+          "next": [
+            {
+              "text": "Thanks"
+            }
+          ]
+        },
+        {
+          "name": "get_notpositive",
+          "condition": "_negemotion == False",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "For the moment, focus particularly on what was hard about the situation. We'll get to seeing the silver lining next. How was this situation hard for you?",
+              "What about this situation was difficult or challenging for you?",
+              "What was the hardest part of this situation?"
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_negative2",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "_emotion",
+              "value": "sensor.nlc('robinson_emotions')['top_class'] if sensor.nlc('robinson_emotions')['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            }
+          ]
+        },
+        {
+          "name": "get_negemotion",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "What negative thoughts or feelings do you have about it now?"
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "If you don't have negative emotions about it now, that's fine. But it's helpful to reflect on any feelings that may be lingering from it. How do you feel about it now?"
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_negemotion",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            },
+            {
+              "variable": "_emotion",
+              "value": "sensor.nlc('robinson_emotions')['top_class'] if sensor.nlc('robinson_emotions')['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            }
+          ]
+        },
+        {
+          "name": "mirror_emotion",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_emotion_phrase",
+              "value": "'they catch you by surprise' if _emotion == 'alarm' else 'you have a hard time sitting with them' if _emotion == 'aversion' else 'you don’t feel them as much any more' if _emotion == 'indifference' else 'they bring up some of you fears or anxieties' if _emotion == 'fear' else 'they make you feel angry' if _emotion == 'anger' else 'they make you feel sad' if _emotion == 'sorrow' else 'it’s frustrating to think about them' if _emotion == 'frustration' else 'you feel embarrassed or ashamed by them' if _emotion == 'embarrassment' else 'you wish they didn’t exist' if _emotion == 'avarice' else 'it’s frustrating to think about them' if _emotion == 'cruelty' else 'you hate them' if _emotion == 'hate' else 'it’s hard'"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "f'Thank you. Even if {_emotion_phrase}, it’s helpful to acknowledge the emotions this situation led you to feel.'"
+            ]
+          },
+          "input": {
+            "intro": true
+          },
+          "next": [
+            {
+              "goto": "positive"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "positive",
+      "condition": true,
+      "sequential": true,
+      "nodes": [
+        {
+          "name": "get_negative",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "Now, whether they're obvious or not, let's name some of the good that's come from this situation. What opportunities, growth, or positive change has this situation led to?",
+              "What opportunities, growth, or positive change has this situation led to?",
+              "What good has come from this situation?"
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "It's OK if you can't think of anything. But reflect for moment on the ways your life has progressed since this happened. What good things have come about as a result of going through this?"
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_positive",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "sensor_text",
+              "value": "setback_positive"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            },
+            {
+              "variable": "_posemotion",
+              "value": "False if sensor.nlc('pos_neg_neutral')['top_class'] == 'negative' and sensor.nlc('pos_neg_neutral')['classes'][0]['confidence'] > _emotvalence_threshold else True"
+            },
+            {
+              "variable": "_emotion",
+              "value": "sensor.nlc('robinson_emotions')['top_class'] if sensor.nlc('robinson_emotions')['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            },
+            {
+              "variable": "_word_count3",
+              "value": "len(split(setback_positive))"
+            }
+          ],
+          "next": [
+            {
+              "text": "OK"
+            },
+            {
+              "condition": "_word_count3 >= 10 and _posemotion == True",
+              "call": {
+                "dialog": "Person-Interview",
+                "parameters": [
+                  "sensor_text"
+                ],
+                "return": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "getmore_positive",
+          "condition": "_word_count3 < 10",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "Reflect for a minute on the question, \"What benefits have I experienced as a result of this in my past?\" Describe in a little more detail what good has come from it."
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "Describe in just a few more words how this situation has led you to opportunities, relationships, or self-awareness you might not otherwise have found."
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_positive2",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "sensor_text",
+              "value": "setback_positive+' '+setback_positive2"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            },
+            {
+              "variable": "_posemotion",
+              "value": "False if nlc('pos_neg_neutral', setback_positive+' '+setback_positive2)['top_class'] == 'negative' and nlc('pos_neg_neutral', setback_positive+' '+setback_positive2)['classes'][0]['confidence'] > _emotvalence_threshold else _posemotion"
+            },
+            {
+              "variable": "_emotion",
+              "value": "nlc('robinson_emotions', setback_positive+' '+setback_positive2)['top_class'] if nlc('robinson_emotions', setback_positive+' '+setback_positive2)['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            }
+          ],
+          "next": [
+            {
+              "text": "Thanks"
+            },
+            {
+              "condition": "_posemotion == True",
+              "call": {
+                "dialog": "Person-Interview",
+                "parameters": [
+                  "sensor_text"
+                ],
+                "return": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "get_notnegative",
+          "condition": "_posemotion == False",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "Even though we've acknowledged the negatives, try to focus exclusively on the positives now. What good, maybe small or subtle, has come about because of this situation and your experience of it?",
+              "What opportunities, growth, or positive change has this situation led to?",
+              "What good has come from this situation?"
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "Name some of the opportunities, relationships, or self-awareness that going through this led to for you."
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_positive2",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "sensor_text",
+              "value": "setback_positive+' '+setback_positive2"
+            },
+            {
+              "variable": "_emotion",
+              "value": "sensor.nlc('robinson_emotions')['top_class'] if sensor.nlc('robinson_emotions')['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            }
+          ],
+          "next": [
+            {
+              "call": {
+                "dialog": "Person-Interview",
+                "parameters": [
+                  "sensor_text"
+                ],
+                "return": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "get_posemotion",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "How do you feel focusing on the good?",
+              "How does it feel to focus on the positive outcomes of this situation?"
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_posemotion",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "_emotion",
+              "value": "sensor.nlc('robinson_emotions')['top_class'] if sensor.nlc('robinson_emotions')['classes'][0]['confidence'] > _emotname_threshold else _emotion"
+            }
+          ]
+        },
+        {
+          "name": "mirror_emotion",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_emotion_phrase",
+              "value": "'think deeply about what good came from this' if _emotion == 'interest' else 'focus on the benefits of this situation' if _emotion == 'attraction' else 'see the good you might have been missing' if _emotion == 'surprise' else 'feel some hope and optimism' if _emotion == 'hope' else 'be thankful for some aspects of this situation' if _emotion == 'gratitude' else 'see the joy that has come from it' if _emotion == 'joy' else 'see the joy that has come from it' if _emotion == 'Joy' else 'feel a sense of relief' if _emotion == 'relief' else 'take pride in your ability to overcome it' if _emotion == 'pride' else 'recognize that gifts it has provided' if _emotion == 'generosity' else 'feel some compassion for yourself' if _emotion == 'sympathy' else 'feel the love that has helped you through it' if _emotion == 'love' else 'recognize the good'"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "f'It seems like alongside the negative, you’re also able to {_emotion_phrase}.'"
+            ]
+          },
+          "input": {
+            "intro": true
+          },
+          "next": [
+            {
+              "goto": "details"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "details",
+      "condition": true,
+      "sequential": true,
+      "nodes": [
+        {
+          "name": "get_reflection",
+          "delay": 1500,
+          "pre_calc": [
+            {
+              "variable": "_unsure_check",
+              "value": "True"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "What did you learn reflecting on both the bad and good of this situation?"
+            ],
+            "alternative_prompts": [
+              {
+                "handler": "unsure",
+                "prompts": "OK. How do you think reflecting on both the negatives and positives of past events can help people?"
+              }
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_reflection",
+              "value": "str(sensor)"
+            },
+            {
+              "variable": "_unsure_check",
+              "value": "False"
+            },
+            {
+              "variable": "_word_count4",
+              "value": "len(split(setback_reflection))"
+            }
+          ],
+          "next": [
+            {
+              "condition": "_word_count4 >= 10",
+              "text": "Thanks",
+              "goto": "end"
+            }
+          ]
+        },
+        {
+          "name": "get_reflection2",
+          "condition": "_word_count4 < 10",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "How can you apply what you learned here other times you are thinking negatively?"
+            ]
+          },
+          "input": {
+            "text_line": true
+          },
+          "post_calc": [
+            {
+              "variable": "setback_reflection2",
+              "value": "str(sensor)"
+            }
+          ],
+          "next": [
+            {
+              "text": "OK, thanks.",
+              "goto": "end"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "end",
+      "condition": true,
+      "sequential": true,
+      "nodes": [
+        {
+          "name": "end_text1",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "Good work."
+            ]
+          },
+          "input": {
+            "intro": true
+          }
+        },
+        {
+          "name": "end_text2",
+          "delay": 1500,
+          "ask": {
+            "prompts": [
+              "f'To summarize, you said a setback or advesity you faced was: \"{setback_situation}\"'"
+            ]
+          },
+          "input": {
+            "intro": true,
+            "store_title_in_post": "A setback or adversity I faced:",
+            "store_text_in_post": "f'{setback_situation}'"
+          }
+        },
+        {
+          "name": "end_text2b",
+          "condition": "setback_situation2 != ''",
+          "delay": 3500,
+          "ask": {
+            "prompts": [
+              "f'And: \"{setback_situation2}\"'"
+            ]
+          },
+          "input": {
+            "intro": true,
+            "store_text_in_post": "f'{setback_situation2}'"
+          }
+        },
+        {
+          "name": "end_text3",
+          "condition": "setback_negative2 == ''",
+          "delay": 3500,
+          "ask": {
+            "prompts": [
+              "f'The negatives included: \"{setback_negative}\"'"
+            ]
+          },
+          "input": {
+            "single": [
+              {
+                "0": "OK"
+              }
+            ],
+            "store_title_in_post": "The negatives included:",
+            "store_text_in_post": "f'{setback_negative}'"
+          }
+        },
+        {
+          "name": "end_text3b",
+          "condition": "setback_negative2 != ''",
+          "delay": 3500,
+          "ask": {
+            "prompts": [
+              "f'The negatives included: \"{setback_negative2}\"'"
+            ]
+          },
+          "input": {
+            "single": [
+              {
+                "0": "OK"
+              }
+            ],
+            "store_title_in_post": "The negatives included:",
+            "store_text_in_post": "f'{setback_negative2}'"
+          }
+        },
+        {
+          "name": "end_text4",
+          "condition": "setback_positive2 == ''",
+          "delay": 1000,
+          "ask": {
+            "prompts": [
+              "f'But you also saw the benefits: \"{setback_positive}\"'"
+            ]
+          },
+          "input": {
+            "intro": true,
+            "store_title_in_post": "But I also saw the benefits:",
+            "store_text_in_post": "f'{setback_positive}'"
+          }
+        },
+        {
+          "name": "end_text4b",
+          "condition": "setback_positive2 != ''",
+          "delay": 1000,
+          "ask": {
+            "prompts": [
+              "f'But you also saw the benefits: \"{setback_positive2}\"'"
+            ]
+          },
+          "input": {
+            "intro": true,
+            "store_title_in_post": "But I also saw the benefits:",
+            "store_text_in_post": "f'{setback_positive}'"
+          }
+        },
+        {
+          "name": "end_text5",
+          "condition": "setback_reflection2 == ''",
+          "delay": 3500,
+          "ask": {
+            "prompts": [
+              "f'Your reflection was: \"{setback_reflection}\".'"
+            ]
+          },
+          "input": {
+            "single": [
+              {
+                "0": "OK"
+              }
+            ],
+            "store_title_in_post": "My reflection on seeing both the bad and good of the situation:",
+            "store_text_in_post": "f'{setback_reflection}'"
+          }
+        },
+        {
+          "name": "end_text5b",
+          "condition": "setback_reflection2 != ''",
+          "delay": 3500,
+          "ask": {
+            "prompts": [
+              "f'Your reflection was: \"{setback_reflection}\". And you can use these skills in the future: \"{setback_reflection2}\"'"
+            ]
+          },
+          "input": {
+            "single": [
+              {
+                "0": "OK"
+              }
+            ],
+            "store_title_in_post": "My reflection on seeing both the bad and good of the situation:",
+            "store_text_in_post": "f'{setback_reflection}. And I can use this in the future: {setback_reflection2}'"
+          }
+        },
+        {
+          "name": "end_text6",
+          "delay": 1000,
+          "pre_calc": [
+            {
+              "variable": "name_list",
+              "value": "''"
+            },
+            {
+              "variable": "stat_completed_activities",
+              "value": "stat_completed_activities + 1"
+            }
+          ],
+          "ask": {
+            "prompts": [
+              "While we need to acknowledge the negatives in the adversities we face, ensuring that we also see the positive gives us a whole and healthy view of what we've experienced."
+            ]
+          },
+          "input": {
+            "single": [
+              {
+                "0": "Got it"
+              }
+            ]
+          },
+          "next": [
+            {
+              "goto": "end_activity"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "end_activity",
+      "condition": true,
+      "sequential": true,
+      "nodes": [
+        {
+          "name": "end_activity_block",
+          "delay": 500,
+          "ask": {
+            "prompts": [
+              "Goodbye."
+            ]
+          },
+          "input": {
+            "end": true
+          }
+        }
+      ]
+    }
+  ]
+}
