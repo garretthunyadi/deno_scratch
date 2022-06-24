@@ -33,8 +33,8 @@ test("adherance handler exaample", async () => {
     let versions = yarn2Hpml_Debug(dialog_data.items as SugarYarn[], dialog_data.lookups, dialog_data.additional_vars, dialog_data.additional_lgvs)
     await validate_hpml_and_report_if_error(dialog, 'qa01')
 
-    writeAsJson(versions, `./generated/classifiers_and_handlers/${dialog.name}_versions.json`)
-    writeDialog(dialog, `./generated/classifiers_and_handlers/${dialog.name}_hpml.json`)
+    writeAsJson(versions, `./generated/${dialog.name}_versions.json`)
+    writeDialog(dialog, `./generated/${dialog.name}_hpml.json`)
 })
 
 export let dialog_data: { dialog: string, lookups: LookupTable, items: SugarYarn[], additional_lgvs: Lgv[], additional_vars: Var[], } =
